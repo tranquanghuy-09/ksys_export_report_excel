@@ -1,0 +1,239 @@
+/* .spreadsheet-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  padding: 20px;
+  max-width: 1200px;
+  margin: 0 auto;
+  font-family: Arial, sans-serif;
+} */
+
+/* .spreadsheet-title {
+  font-size: 28px;
+  font-weight: bold;
+  margin-bottom: 20px;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 10px;
+} */
+
+/* .hot-container {
+  flex-grow: 1;
+  width: 100%;
+  height: calc(100% - 120px);
+  overflow: auto;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  margin-bottom: 30px;
+} */
+
+/* Handsontable custom styles */
+/* .htCustomStyles .handsontable .htCore {
+  border: 1px solid #e0e0e0;
+} */
+
+/* Định dạng chung cho container */
+.p-4.max-w-7xl.mx-auto {
+  font-family: "Segoe UI", Arial, sans-serif;
+  background-color: #f8fafe;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+  padding: 25px !important;
+  margin-top: 20px;
+}
+
+/* Tiêu đề trang */
+.text-2xl.font-bold.mb-4 {
+  font-size: 28px;
+  color: #2c3e50;
+  border-bottom: 2px solid #3498db;
+  padding-bottom: 12px;
+  margin-bottom: 20px !important;
+  text-align: center;
+}
+
+/* Form điều khiển */
+.mb-4.grid.grid-cols-2.gap-4 {
+  background-color: #ffffff;
+  padding: 20px;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  margin-bottom: 25px !important;
+}
+
+/* Labels trong form */
+.block.text-sm.font-medium.text-gray-700.mb-1 {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2c3e50;
+  margin-bottom: 8px !important;
+}
+
+#actions {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-end;
+  align-items: flex-end;
+  margin-top: -30px;
+}
+
+button {
+  margin-left: 10px;
+  background-color: #3fa43e;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  margin-top: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+
+/* Input fields */
+.border.border-gray-300.rounded.px-3.py-2.w-full {
+  border: 1px solid #cbd5e0;
+  border-radius: 6px;
+  padding: 10px 12px;
+  font-size: 15px;
+  transition: all 0.3s;
+  margin-bottom: 5px;
+  background-color: #f9fafb;
+}
+
+.border.border-gray-300.rounded.px-3.py-2.w-full:focus {
+  border-color: #3498db;
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+  outline: none;
+}
+
+/* Định dạng cho bảng */
+.custom-handsontable {
+  margin-top: 15px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Styles cho handsontable */
+.htCustomStyles .handsontable th {
+  background-color: #3498db;
+  color: white;
+  font-weight: bold;
+  text-align: center;
+  border-color: #2980b9;
+  font-size: 14px;
+}
+
+.htCustomStyles .handsontable td {
+  color: #333;
+  text-align: center;
+  /* padding: 8px; */
+  border-color: #e0e0e0;
+  font-size: 14px;
+}
+
+/* Dòng chẵn lẻ để dễ nhìn */
+.htCustomStyles .handsontable tbody tr:nth-child(even) td {
+  background-color: #f8f9fa;
+}
+
+.htCustomStyles .handsontable tbody tr:hover td {
+  background-color: #e8f4fc;
+}
+
+/* Nút export */
+.bg-blue-500.text-white.px-2.py-1.rounded.hover\:bg-blue-600 {
+  background-color: #3fa43e;
+  color: white;
+  border: none;
+  padding: 4px 12px;
+  border-radius: 4px;
+  margin-top: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  transition: background-color 0.3s;
+  font-weight: 500;
+}
+
+.bg-blue-500.text-white.px-2.py-1.rounded.hover\:bg-blue-600:hover {
+  background-color: #2980b9;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+}
+
+/* Cải thiện dropdown styles */
+.htCustomStyles .handsontable .htAutocompleteArrow {
+  color: #3498db;
+  font-size: 12px;
+  padding: 5px;
+  border-radius: 2px;
+}
+
+.htCustomStyles .handsontable .htSelectEditor {
+  border: 1px solid #3498db !important;
+}
+
+.htLeft {
+  text-align: left !important;
+}
+
+/* Hiệu ứng focus cho ô active */
+/* .htCustomStyles .handsontable .current {
+  border: 1px solid #3498db !important;
+} */
+
+/* Responsive styles */
+
+/* .htCustomStyles {
+  width: 100%;
+  height: 100%;
+} */
+
+/* Định dạng tốt hơn cho ô dropdown */
+/* .handsontable .htAutocompleteArrow {
+  float: right;
+  font-size: 10px;
+  color: #3498db;
+  cursor: pointer;
+  padding: 5px;
+  background: #f0f8ff;
+  border-radius: 2px;
+} */
+
+/* .handsontable td.htDimmed {
+  color: #333 !important;
+} */
+
+/* .handsontable .currentRow {
+  background-color: #e8f4fc !important;
+} */
+
+/* Cải thiện hiển thị dropdown menu */
+/* .htDropdownMenu ul li {
+  padding: 8px 12px !important;
+  font-size: 14px !important;
+} */
+
+/* .htDropdownMenu ul li:hover {
+  background-color: #e8f4fc !important;
+} */
+
+/* .htDropdownMenu ul li.ht__active {
+  background-color: #3498db !important;
+  color: white !important;
+} */
+
+.htBorderAll td {
+  border: 1px solid #e2e8f0;
+}
+
+.custom-handsontable .htCenter {
+  text-align: center;
+}
+
+.custom-handsontable .htLeft {
+  text-align: left;
+}
