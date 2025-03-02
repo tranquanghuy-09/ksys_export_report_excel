@@ -10,58 +10,94 @@ import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
 
 // Định nghĩa DateRenderer tùy chỉnh
-function CustomDateRenderer(instance, td, row, col, prop, value, cellProperties) {
-    textRenderer.apply(this, [instance, td, row, col, prop, value || "", cellProperties]);
+function CustomDateRenderer(
+    this: void,
+    instance: Handsontable,
+    td: HTMLTableCellElement,
+    row: number,
+    col: number,
+    prop: string | number,
+    value: any,
+    cellProperties: any
+): HTMLTableCellElement {
+    textRenderer.apply(this as any, [instance, td, row, col, prop, value || "", cellProperties]);
     td.style.textAlign = "center";
+    return td;
+}
+
+// Interface cho instance của Handsontable
+interface HandsontableInstance extends Handsontable {
+    view: {
+        wt: {
+            wtTable: {
+                getCell: (coords: { row: number; col: number }) => {
+                    top: number;
+                    start: number;
+                    width: number;
+                    height: number
+                };
+            };
+        };
+    };
+    rootElement: HTMLElement;
 }
 
 // Sửa lại định nghĩa CustomDateEditor
 class CustomDateEditor extends BaseEditor {
     private TEXTAREA: HTMLInputElement;
 
-    constructor(instance) {
+    constructor(instance: HandsontableInstance) {
         super(instance);
 
         // Create an input element
-        this.TEXTAREA = document.createElement('INPUT');
+        this.TEXTAREA = document.createElement('input') as HTMLInputElement;
         this.TEXTAREA.setAttribute('type', 'date');
         this.TEXTAREA.style.width = '100%';
         this.TEXTAREA.style.height = '100%';
     }
 
-    prepare(row, col, prop, td, originalValue, cellProperties) {
+    prepare(
+        this: CustomDateEditor,
+        row: number,
+        col: number,
+        prop: string | number,
+        td: HTMLTableCellElement,
+        originalValue: string | number | null,
+        cellProperties: Handsontable.CellProperties
+    ): void {
         super.prepare(row, col, prop, td, originalValue, cellProperties);
         this.originalValue = originalValue || '';
     }
 
-    getValue() {
+    getValue(this: CustomDateEditor): string {
         return this.TEXTAREA.value;
     }
 
-    setValue(value) {
+    setValue(this: CustomDateEditor, value: string): void {
         this.TEXTAREA.value = value;
     }
 
-    open() {
+    open(this: CustomDateEditor): void {
         this.refreshDimensions();
         this.instance.rootElement.appendChild(this.TEXTAREA);
         this.TEXTAREA.focus();
     }
 
-    close() {
+    close(this: CustomDateEditor): void {
         this.TEXTAREA.blur();
         if (this.TEXTAREA.parentNode) {
             this.TEXTAREA.parentNode.removeChild(this.TEXTAREA);
         }
     }
 
-    focus() {
+    focus(this: CustomDateEditor): void {
         this.TEXTAREA.focus();
     }
 
-    refreshDimensions() {
-        const { TD, row, col } = this;
-        const { top, start, width, height } = this.instance.view.wt.wtTable.getCell({ row, col });
+    refreshDimensions(this: CustomDateEditor): void {
+        const { row, col } = this;
+        const instance = this.instance as HandsontableInstance;
+        const { top, start, width, height } = instance.view.wt.wtTable.getCell({ row, col });
 
         const editTop = top;
         const editLeft = start;
@@ -74,6 +110,17 @@ class CustomDateEditor extends BaseEditor {
         this.TEXTAREA.style.top = editTop + 'px';
         this.TEXTAREA.style.left = editLeft + 'px';
     }
+}
+
+// Row data interface
+interface RowData {
+    reportDate: string;
+    reportTime: number;
+    startingTime: string;
+    jobContent: string;
+    completed: string;
+    completingTime: string;
+    remark: string;
 }
 
 const Spreadsheet: React.FC = () => {
@@ -115,7 +162,7 @@ const Spreadsheet: React.FC = () => {
         if (!hot) return;
 
         const data = hot.getSourceData();
-        const updatedData = data.map(row => ({
+        const updatedData = data.map((row: RowData) => ({
             ...row,
             jobContent: "",
             completingTime: "",
@@ -136,7 +183,7 @@ const Spreadsheet: React.FC = () => {
         // Chuẩn bị dữ liệu xuất
         const headers = ["Report date", "Report time", "Starting time", "Job content", "Completed Y/N", "Completing time", "Remark"];
         const dataToExport = reportHours.map(hour => {
-            const rowIndex = hot.getSourceData().findIndex(rowData => rowData.reportTime === hour);
+            const rowIndex = hot.getSourceData().findIndex((rowData: RowData) => rowData.reportTime === hour);
             if (rowIndex >= 0) {
                 const rowData = hot.getSourceDataAtRow(rowIndex);
                 if (hour > currentHour) {
@@ -244,15 +291,12 @@ const Spreadsheet: React.FC = () => {
 
         // Generate all Excel files
         for (const hour of reportHours) {
-            const rowIndex = hot.getSourceData().findIndex(rowData => rowData.reportTime === hour);
+            const rowIndex = hot.getSourceData().findIndex((rowData: RowData) => rowData.reportTime === hour);
             if (rowIndex >= 0) {
-                // Get data for current row
-                const currentRowObj = hot.getSourceDataAtRow(rowIndex);
-
                 // Prepare export data (reusing logic from exportRow)
                 const headers = ["Report date", "Report time", "Starting time", "Job content", "Completed Y/N", "Completing time", "Remark"];
                 const dataToExport = reportHours.map(h => {
-                    const rowIdx = hot.getSourceData().findIndex(rowData => rowData.reportTime === h);
+                    const rowIdx = hot.getSourceData().findIndex((rowData: RowData) => rowData.reportTime === h);
                     if (rowIdx >= 0) {
                         const rowData = hot.getSourceDataAtRow(rowIdx);
                         if (h > hour) {
@@ -392,7 +436,7 @@ const Spreadsheet: React.FC = () => {
             width: 150
         },
         {
-            renderer: (instance, td, row) => {
+            renderer: (_instance: any, td: HTMLTableCellElement, row: number) => {
                 td.innerHTML = '<button class="bg-blue-500 text-white px-2 py-1 rounded hover:bg-blue-600">Export</button>';
                 td.onclick = () => exportRow(row);
                 return td;
@@ -468,17 +512,17 @@ const Spreadsheet: React.FC = () => {
                 readOnly={false}
                 manualColumnResize={true}
                 contextMenu={true}
-                afterChange={(changes) => {
+                afterChange={() => {
                     // Cập nhật data khi thay đổi
                 }}
                 className="custom-handsontable htCustomStyles"
-                cells={(row, col) => {
+                cells={(row: number, col: number) => {
                     // Thay đổi màu sắc header và row headers sang màu xanh
                     if (row === -1) {
                         return {
                             className: "htCenter",
                             readOnly: true,
-                            renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                            renderer: function (_instance: any, td: HTMLTableCellElement, _row: number, _col: number, _prop: any, value: any, _cellProperties: any) {
                                 td.innerHTML = value;
                                 td.style.backgroundColor = '#2c7fb8';
                                 td.style.color = 'white';
@@ -494,7 +538,7 @@ const Spreadsheet: React.FC = () => {
                         return {
                             className: "htCenter",
                             readOnly: true,
-                            renderer: function (instance, td, row, col, prop, value, cellProperties) {
+                            renderer: function (_instance: any, td: HTMLTableCellElement, _row: number, _col: number, _prop: any, value: any, _cellProperties: any) {
                                 td.innerHTML = value;
                                 td.style.backgroundColor = '#2c7fb8';
                                 td.style.color = 'white';

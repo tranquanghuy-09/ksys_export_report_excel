@@ -1,4 +1,3 @@
-import React from "react";
 import Spreadsheet from "./Spreadsheet";
 import "./App.css";
 
