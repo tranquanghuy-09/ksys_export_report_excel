@@ -123,25 +123,66 @@ interface RowData {
     remark: string;
 }
 
+// Thêm interface cho FileSystemFileHandle và ShowSaveFilePickerOptions
+interface FileSystemFileHandle {
+    createWritable(): Promise<FileSystemWritableFileStream>;
+}
+
+interface FileSystemWritableFileStream {
+    write(data: any): Promise<void>;
+    close(): Promise<void>;
+}
+
+interface ShowSaveFilePickerOptions {
+    suggestedName?: string;
+    types?: Array<{
+        description: string;
+        accept: Record<string, string[]>;
+    }>;
+}
+
+// Mở rộng Window interface
+declare global {
+    interface Window {
+        showSaveFilePicker(options?: ShowSaveFilePickerOptions): Promise<FileSystemFileHandle>;
+    }
+}
+
 const Spreadsheet: React.FC = () => {
     const hotRef = useRef<any>(null);
-    const [selectedDate, setSelectedDate] = useState("2025-02-24");
-    const [userName, setUserName] = useState("Tran Quang Huy");
-    const reportHours = [9, 10, 11, 12, 14, 15, 16, 17]; // Cập nhật giờ theo yêu cầu
+    const [selectedDate, setSelectedDate] = useState(() => {
+        const today = new Date();
+        return today.toISOString().split('T')[0];
+    });
+
+    // Thay đổi khởi tạo state để load từ localStorage
+    const [userName, setUserName] = useState(() => {
+        return localStorage.getItem('hourReport_userName') || "Tran Quang Huy";
+    });
+
+    const [department, setDepartment] = useState(() => {
+        return localStorage.getItem('hourReport_department') || "DevHCM";
+    });
+
+    // Thêm useEffect để lưu khi có thay đổi
+    useEffect(() => {
+        localStorage.setItem('hourReport_userName', userName);
+    }, [userName]);
 
     useEffect(() => {
-        Handsontable.cellTypes.registerCellType('date', {
-            editor: CustomDateEditor,
-            renderer: CustomDateRenderer,
-        });
-    }, []);
+        localStorage.setItem('hourReport_department', department);
+    }, [department]);
 
-    // Cập nhật dữ liệu khi thay đổi ngày
-    useEffect(() => {
-        const hot = hotRef.current?.hotInstance;
-        if (!hot) return;
+    const reportHours = [9, 10, 11, 12, 14, 15, 16, 17];
 
-        const newData = reportHours.map(hour => {
+    // Sửa lại hàm getInitialData để sử dụng localStorage
+    const getInitialData = () => {
+        const savedData = localStorage.getItem(`spreadsheetData_${selectedDate}`);
+        if (savedData) {
+            return JSON.parse(savedData);
+        }
+
+        return reportHours.map(hour => {
             const prevHour = String(hour - 1).padStart(2, '0');
             return {
                 reportDate: selectedDate,
@@ -153,9 +194,48 @@ const Spreadsheet: React.FC = () => {
                 remark: ""
             };
         });
+    };
 
-        hot.loadData(newData);
-    }, [selectedDate, reportHours]);
+    // Sửa lại handler để sử dụng localStorage
+    const handleDataChange = () => {
+        const hot = hotRef.current?.hotInstance;
+        if (!hot) return;
+
+        const currentData = hot.getSourceData();
+        localStorage.setItem(`spreadsheetData_${selectedDate}`, JSON.stringify(currentData));
+    };
+
+    // Sửa trong useEffect để sử dụng localStorage
+    useEffect(() => {
+        const hot = hotRef.current?.hotInstance;
+        if (!hot) return;
+
+        const savedData = localStorage.getItem(`spreadsheetData_${selectedDate}`);
+        if (savedData) {
+            hot.loadData(JSON.parse(savedData));
+        } else {
+            const newData = reportHours.map(hour => {
+                const prevHour = String(hour - 1).padStart(2, '0');
+                return {
+                    reportDate: selectedDate,
+                    reportTime: hour,
+                    startingTime: `${prevHour}:00`,
+                    jobContent: "",
+                    completed: "N",
+                    completingTime: "",
+                    remark: ""
+                };
+            });
+            hot.loadData(newData);
+        }
+    }, [selectedDate]);
+
+    useEffect(() => {
+        Handsontable.cellTypes.registerCellType('date', {
+            editor: CustomDateEditor,
+            renderer: CustomDateRenderer,
+        });
+    }, []);
 
     const clearData = () => {
         const hot = hotRef.current?.hotInstance;
@@ -170,6 +250,26 @@ const Spreadsheet: React.FC = () => {
         }));
 
         hot.loadData(updatedData);
+    };
+
+    const clearAllStorageData = () => {
+        if (window.confirm('Are you sure you want to clear all saved sheet data? This action cannot be undone.')) {
+            // Lấy tất cả keys trong localStorage
+            const keys = Object.keys(localStorage);
+
+            // Xóa tất cả keys bắt đầu bằng "spreadsheetData_"
+            keys.forEach(key => {
+                if (key.startsWith('spreadsheetData_')) {
+                    localStorage.removeItem(key);
+                }
+            });
+
+            // Reload data cho ngày hiện tại
+            const hot = hotRef.current?.hotInstance;
+            if (hot) {
+                hot.loadData(getInitialData());
+            }
+        }
     };
 
     const exportRow = async (row: number) => {
@@ -265,14 +365,40 @@ const Spreadsheet: React.FC = () => {
 
         // Xuất file
         const buffer = await workbook.xlsx.writeBuffer();
-        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        const formattedDate = selectedDate.replace(/-/g, '');
-        a.download = `Hour Report_DevHCM_${userName}_${formattedDate}_${currentHour}.xlsx`;
-        a.click();
-        URL.revokeObjectURL(url);
+
+        try {
+            const formattedDate = selectedDate.replace(/-/g, '');
+            const formattedHour = String(currentHour).padStart(2, '0');
+            const fileName = `Hour Report_${department}_${userName}_${formattedDate}_${formattedHour}.xlsx`;
+
+            const handle = await window.showSaveFilePicker({
+                suggestedName: fileName,
+                types: [{
+                    description: 'Excel Files',
+                    accept: {
+                        'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx']
+                    }
+                }]
+            });
+
+            const writable = await handle.createWritable();
+            await writable.write(buffer);
+            await writable.close();
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name !== 'AbortError') {
+                console.error('Failed to save file:', err);
+                // Fallback to old method if showSaveFilePicker is not supported
+                const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                const formattedDate = selectedDate.replace(/-/g, '');
+                const formattedHour = String(currentHour).padStart(2, '0');
+                a.download = `Hour Report_${department}_${userName}_${formattedDate}_${formattedHour}.xlsx`;
+                a.click();
+                URL.revokeObjectURL(url);
+            }
+        }
     };
 
     const exportAllFiles = async () => {
@@ -380,14 +506,35 @@ const Spreadsheet: React.FC = () => {
                 const buffer = await workbook.xlsx.writeBuffer();
 
                 // Add Excel file to the zip folder
-                const fileName = `Hour Report_DevHCM_${userName}_${formattedDate}_${hour}.xlsx`;
+                const formattedHour = String(hour).padStart(2, '0');
+                const fileName = `Hour Report_${department}_${userName}_${formattedDate}_${formattedHour}.xlsx`;
                 folder.file(fileName, buffer);
             }
         }
 
         // Generate zip file and trigger download
         const content = await zip.generateAsync({ type: 'blob' });
-        saveAs(content, `${formattedDate}.zip`);
+
+        try {
+            const handle = await window.showSaveFilePicker({
+                suggestedName: `${formattedDate}.zip`,
+                types: [{
+                    description: 'ZIP Files',
+                    accept: {
+                        'application/zip': ['.zip']
+                    }
+                }]
+            });
+
+            const writable = await handle.createWritable();
+            await writable.write(content);
+            await writable.close();
+        } catch (err: unknown) {
+            if (err instanceof Error && err.name !== 'AbortError') {
+                console.error('Failed to save file:', err);
+                saveAs(content, `${formattedDate}.zip`);
+            }
+        }
     };
 
     const columns = [
@@ -450,33 +597,59 @@ const Spreadsheet: React.FC = () => {
         <div className="p-4 max-w-7xl mx-auto h-full w-full flex">
             <h1 className="text-2xl font-bold mb-4">Hourly Task Report</h1>
 
-            <div className="mb-4 grid grid-cols-3 gap-4 border border-gray-300 rounded px-3 py-2 w-full">
+            <div className="mb-4 grid grid-cols-4 gap-4 border border-gray-300 rounded px-3 py-2 w-full">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Date:</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Date:&nbsp;&nbsp;&nbsp;</label>
                     <input
                         type="date"
                         value={selectedDate}
                         onChange={(e) => setSelectedDate(e.target.value)}
                         className="border border-gray-300 rounded px-3 py-2 w-full"
+                        style={{ width: '275px' }}
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name:</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name:&nbsp;&nbsp;&nbsp;&nbsp;</label>
                     <input
                         type="text"
                         value={userName}
                         onChange={(e) => setUserName(e.target.value)}
                         className="border border-gray-300 rounded px-3 py-2 w-full"
                         placeholder="Enter your name"
+                        style={{ width: '275px' }}
                     />
+                </div>
+                <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Department:&nbsp;&nbsp;&nbsp;</label>
+                    <select
+                        value={department}
+                        onChange={(e) => setDepartment(e.target.value)}
+                        className="border border-gray-300 rounded px-3 py-2 w-full"
+                        style={{ width: '300px' }}
+                    >
+                        <option value="DevHCM">DevHCM</option>
+                        <option value="AsHCM">AsHCM</option>
+                        <option value="DevDN">DevDN</option>
+                        <option value="AsDN">AsDN</option>
+                        <option value="DevHN">DevHN</option>
+                        <option value="AsHN">AsHN</option>
+                    </select>
                 </div>
                 <div className="w-full flex flex-row px-3 py-2" id="actions">
                     <div className="flex w-full flex-row gap-2 justify-end items-end">
                         <button
                             onClick={clearData}
                             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
+                            style={{ backgroundColor:"rgb(160, 144, 160) " }}
                         >
                             Clear Content
+                        </button>
+                        <button
+                            onClick={clearAllStorageData}
+                            className="bg-red-700 text-white px-4 py-2 rounded hover:bg-red-800 transition-colors"
+                            style={{ backgroundColor: "#FF0000" }}
+                        >
+                            Clear All Saved Data
                         </button>
                         <button
                             onClick={exportAllFiles}
@@ -490,18 +663,7 @@ const Spreadsheet: React.FC = () => {
 
             <HotTable
                 ref={hotRef}
-                data={reportHours.map(hour => {
-                    const prevHour = String(hour - 1).padStart(2, '0');
-                    return {
-                        reportDate: selectedDate,
-                        reportTime: hour,
-                        startingTime: `${prevHour}:00`,
-                        jobContent: "",
-                        completed: "N",
-                        completingTime: "",
-                        remark: ""
-                    };
-                })}
+                data={getInitialData()}
                 colHeaders={["Report date", "Report time", "Starting time", "Job content", "Completed Y/N", "Completing time", "Remark", "Actions"]}
                 rowHeaders={true}
                 columns={columns}
@@ -512,8 +674,10 @@ const Spreadsheet: React.FC = () => {
                 readOnly={false}
                 manualColumnResize={true}
                 contextMenu={true}
-                afterChange={() => {
-                    // Cập nhật data khi thay đổi
+                afterChange={(changes) => {
+                    if (changes) {
+                        handleDataChange();
+                    }
                 }}
                 className="custom-handsontable htCustomStyles"
                 cells={(row: number, col: number) => {
