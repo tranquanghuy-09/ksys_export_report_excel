@@ -640,7 +640,7 @@ const Spreadsheet: React.FC = () => {
                         <button
                             onClick={clearData}
                             className="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600 transition-colors"
-                            style={{ backgroundColor:"rgb(160, 144, 160) " }}
+                            style={{ backgroundColor: "rgb(160, 144, 160) " }}
                         >
                             Clear Content
                         </button>
@@ -668,7 +668,7 @@ const Spreadsheet: React.FC = () => {
                 rowHeaders={true}
                 columns={columns}
                 licenseKey="non-commercial-and-evaluation"
-                height="auto"
+                height="45vh"
                 width="100%"
                 stretchH="all"
                 readOnly={false}
