@@ -595,7 +595,7 @@ const Spreadsheet: React.FC = () => {
 
     return (
         <div className="p-4 max-w-7xl mx-auto h-full w-full flex">
-            <h1 className="text-2xl font-bold mb-4">Hourly Task Report</h1>
+            <h1 className="text-2xl font-bold mb-4 -mt-4">Hourly Task Report</h1>
 
             <div className="mb-4 grid grid-cols-4 gap-4 border border-gray-300 rounded px-3 py-2 w-full">
                 <div>
