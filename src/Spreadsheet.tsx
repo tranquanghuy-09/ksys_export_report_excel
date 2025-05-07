@@ -680,7 +680,7 @@ const Spreadsheet: React.FC = () => {
                         const hot = hotRef.current?.hotInstance;
                         if (!hot) return;
 
-                        changes.forEach(([row, col, oldValue, newValue]) => {
+                        changes.forEach(([row, col, , newValue]) => {
                             // Format thời gian cho cột startingTime và completingTime
                             if ((col === 'startingTime' || col === 'completingTime') && newValue) {
                                 let formattedTime = newValue;
