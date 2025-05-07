@@ -246,7 +246,8 @@ const Spreadsheet: React.FC = () => {
             ...row,
             jobContent: "",
             completingTime: "",
-            remark: ""
+            remark: "",
+            completed: "N",
         }));
 
         hot.loadData(updatedData);
@@ -599,7 +600,7 @@ const Spreadsheet: React.FC = () => {
 
             <div className="mb-4 grid grid-cols-4 gap-4 border border-gray-300 rounded px-3 py-2 w-full">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Date:&nbsp;&nbsp;&nbsp;</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Select Date:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
                     <input
                         type="date"
                         value={selectedDate}
@@ -609,7 +610,7 @@ const Spreadsheet: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name:&nbsp;&nbsp;&nbsp;&nbsp;</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Your Name:&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</label>
                     <input
                         type="text"
                         value={userName}
@@ -620,7 +621,7 @@ const Spreadsheet: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Department:&nbsp;&nbsp;&nbsp;</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" style={{paddingRight: "2px"}}>Department:&nbsp;&nbsp;&nbsp;</label>
                     <select
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
@@ -676,6 +677,74 @@ const Spreadsheet: React.FC = () => {
                 contextMenu={true}
                 afterChange={(changes) => {
                     if (changes) {
+                        const hot = hotRef.current?.hotInstance;
+                        if (!hot) return;
+
+                        changes.forEach(([row, col, oldValue, newValue]) => {
+                            // Format thời gian cho cột startingTime và completingTime
+                            if ((col === 'startingTime' || col === 'completingTime') && newValue) {
+                                let formattedTime = newValue;
+
+                                // Nếu chỉ nhập số nguyên (vd: 12, 9)
+                                if (/^\d{1,2}$/.test(newValue)) {
+                                    formattedTime = `${newValue.padStart(2, '0')}:00`;
+                                    hot.setDataAtRowProp(row, col, formattedTime);
+                                }
+                                // Nếu nhập số không có dấu : (vd: 1230, 930)
+                                else if (/^\d{3,4}$/.test(newValue)) {
+                                    const hours = newValue.length === 3 ?
+                                        newValue.substring(0, 1) : newValue.substring(0, 2);
+                                    const minutes = newValue.length === 3 ?
+                                        newValue.substring(1) : newValue.substring(2);
+                                    formattedTime = `${hours.padStart(2, '0')}:${minutes}`;
+                                    hot.setDataAtRowProp(row, col, formattedTime);
+                                }
+
+                                // Sau khi format xong, xử lý logic thời gian bắt đầu của hàng tiếp theo
+                                if (col === 'completingTime') {
+                                    const currentRow = hot.getSourceDataAtRow(row);
+                                    const currentReportTime = currentRow.reportTime;
+
+                                    const nextRow = row + 1;
+                                    const totalRows = hot.countRows();
+                                    if (currentReportTime !== 12) {
+                                        if (nextRow < totalRows) {
+                                            // Kiểm tra nếu completing time thuộc giờ 12
+                                            if (formattedTime.startsWith("12:")) {
+                                                hot.setDataAtRowProp(nextRow, 'startingTime', "14:00");
+                                            } else {
+                                                hot.setDataAtRowProp(nextRow, 'startingTime', formattedTime);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+
+                            // Xử lý thay đổi trong cột completed
+                            if (col === 'completed') {
+                                if (newValue === "Y") {
+                                    const currentRow = hot.getSourceDataAtRow(row);
+                                    const currentReportTime = currentRow.reportTime;
+
+
+                                    // Kiểm tra nếu là giờ 12
+                                    if (currentReportTime === 12) {
+                                        hot.setDataAtRowProp(row, 'completingTime', "12:00");
+                                    } else {
+                                        const nextRow = hot.getSourceDataAtRow(row + 1);
+                                        if (nextRow) {
+                                            hot.setDataAtRowProp(row, 'completingTime', nextRow.startingTime);
+                                        } else {
+                                            const completingHour = String(currentReportTime).padStart(2, '0');
+                                            hot.setDataAtRowProp(row, 'completingTime', `${completingHour}:00`);
+                                        }
+                                    }
+                                } else if (newValue === "N") {
+                                    hot.setDataAtRowProp(row, 'completingTime', '');
+                                }
+                            }
+                        });
+
                         handleDataChange();
                     }
                 }}

@@ -237,3 +237,6 @@ button {
 .custom-handsontable .htLeft {
   text-align: left;
 }
+.bg-red-100 {
+  background-color: #fee2e2 !important;
+}
