@@ -8,6 +8,7 @@ import "handsontable/dist/handsontable.full.css";
 import "./Spreadsheet.css";
 import JSZip from 'jszip';
 import { saveAs } from 'file-saver';
+import { useTheme } from "./ThemeContext";
 
 // Định nghĩa DateRenderer tùy chỉnh
 function CustomDateRenderer(
@@ -150,6 +151,7 @@ declare global {
 
 const Spreadsheet: React.FC = () => {
     const hotRef = useRef<any>(null);
+    const { actualTheme } = useTheme();
     const [selectedDate, setSelectedDate] = useState(() => {
         const today = new Date();
         return today.toISOString().split('T')[0];
@@ -595,7 +597,7 @@ const Spreadsheet: React.FC = () => {
     ];
 
     return (
-        <div className="p-4 max-w-7xl mx-auto h-full w-full flex">
+        <div className={`p-4 max-w-7xl mx-auto h-full w-full flex ${actualTheme === 'dark' ? 'dark' : ''}`}>
             <h1 className="text-2xl font-bold mb-4">Hourly Task Report</h1>
 
             <div className="mb-4 grid grid-cols-4 gap-4 border border-gray-300 rounded px-3 py-2 w-full">
@@ -621,12 +623,12 @@ const Spreadsheet: React.FC = () => {
                     />
                 </div>
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1" style={{paddingRight: "2px"}}>Department:&nbsp;&nbsp;&nbsp;</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1" style={{ paddingRight: "2px" }}>Department:&nbsp;&nbsp;&nbsp;</label>
                     <select
                         value={department}
                         onChange={(e) => setDepartment(e.target.value)}
                         className="border border-gray-300 rounded px-3 py-2 w-full"
-                        style={{ width: '300px' }}
+                        style={{ width: '275px' }}
                     >
                         <option value="DevHCM">DevHCM</option>
                         <option value="AsHCM">AsHCM</option>

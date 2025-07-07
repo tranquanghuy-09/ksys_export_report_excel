@@ -12,6 +12,11 @@
   display: flex;
   flex-direction: column;
   overflow: hidden; /* Ngăn scroll ở App */
+  transition: background 0.3s ease;
+}
+
+.App.dark {
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #111827 100%);
 }
 
 .flex-grow {
@@ -54,6 +59,96 @@
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+/* Dark table styles */
+.dark-table .ant-table {
+  background-color: #374151 !important;
+}
+
+.dark-table .ant-table-thead > tr > th {
+  background-color: #4B5563 !important;
+  color: white !important;
+  border-bottom: 1px solid #6B7280 !important;
+}
+
+.dark-table .ant-table-tbody > tr > td {
+  background-color: #374151 !important;
+  border-bottom: 1px solid #4B5563 !important;
+  color: white !important;
+}
+
+.dark-table .ant-table-tbody > tr:hover > td {
+  background-color: #4B5563 !important;
+}
+
+.dark-table .ant-pagination {
+  color: white !important;
+}
+
+.dark-table .ant-pagination .ant-pagination-item {
+  background-color: #4B5563 !important;
+  border-color: #6B7280 !important;
+}
+
+.dark-table .ant-pagination .ant-pagination-item a {
+  color: white !important;
+}
+
+.dark-table .ant-pagination .ant-pagination-item:hover {
+  border-color: #3B82F6 !important;
+}
+
+.dark-table .ant-pagination .ant-pagination-item-active {
+  background-color: #3B82F6 !important;
+  border-color: #3B82F6 !important;
+}
+
+.dark-table .ant-pagination .ant-pagination-prev,
+.dark-table .ant-pagination .ant-pagination-next {
+  color: white !important;
+}
+
+.dark-table .ant-pagination .ant-pagination-prev:hover,
+.dark-table .ant-pagination .ant-pagination-next:hover {
+  color: #3B82F6 !important;
+}
+
+/* Dark form styles */
+.dark .ant-form-item-label > label {
+  color: white !important;
+}
+
+.dark .ant-input,
+.dark .ant-input-password {
+  background-color: #374151 !important;
+  border-color: #4B5563 !important;
+  color: white !important;
+}
+
+.dark .ant-input:hover,
+.dark .ant-input-password:hover {
+  border-color: #6B7280 !important;
+}
+
+.dark .ant-input:focus,
+.dark .ant-input-password:focus {
+  border-color: #3B82F6 !important;
+  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2) !important;
+}
+
+.dark .ant-card {
+  background-color: #374151 !important;
+  border-color: #4B5563 !important;
+}
+
+.dark .ant-card-head {
+  background-color: #4B5563 !important;
+  border-bottom-color: #6B7280 !important;
+}
+
+.dark .ant-card-head-title {
+  color: white !important;
 }
 
 /* Giữ lại các quy tắc khác của bạn */

@@ -2,10 +2,141 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Root CSS Variables for theme */
+:root {
+  --bg-color: #ffffff;
+  --text-color: #1f2937;
+  --border-color: #d1d5db;
+  --card-bg: #ffffff;
+  --secondary-text: #6b7280;
+  --hover-bg: #f3f4f6;
+  --table-header-bg: #3498db;
+  --table-hover: #e8f4fc;
+  --accent-color: #3b82f6;
+  --success-color: #10b981;
+}
+
+.dark {
+  --bg-color: #0f172a;
+  --text-color: #f1f5f9;
+  --border-color: #475569;
+  --card-bg: #1e293b;
+  --secondary-text: #cbd5e1;
+  --hover-bg: #334155;
+  --table-header-bg: #2563eb;
+  --table-hover: #334155;
+  --accent-color: #60a5fa;
+  --success-color: #34d399;
+}
+
 body {
   margin: 0;
   padding: 0;
   min-width: 100vw;
   min-height: 100vh;
   display: block;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Dark mode support for cards and components */
+.dark .ant-card {
+  background-color: var(--card-bg) !important;
+  border-color: var(--border-color) !important;
+}
+
+.dark .ant-typography {
+  color: var(--text-color) !important;
+}
+
+.dark .ant-typography-caption {
+  color: var(--secondary-text) !important;
+}
+
+/* Dark mode for Layout components */
+.dark .ant-layout {
+  background-color: var(--bg-color) !important;
+}
+
+.dark .ant-layout-content {
+  background-color: var(--bg-color) !important;
+}
+
+/* Dark mode for form elements */
+.dark input, .dark select, .dark textarea {
+  background: linear-gradient(135deg, var(--card-bg) 0%, #0f172a 100%) !important;
+  border-color: var(--border-color) !important;
+  color: var(--text-color) !important;
+  transition: all 0.3s ease !important;
+}
+
+.dark input:focus, .dark select:focus, .dark textarea:focus {
+  border-color: var(--accent-color) !important;
+  box-shadow: 0 0 0 3px rgba(96, 165, 250, 0.15) !important;
+  background: var(--card-bg) !important;
+  transform: translateY(-1px) !important;
+}
+
+/* Dark mode glow effects */
+.dark .text-2xl.font-bold {
+  position: relative !important;
+}
+
+.dark .text-2xl.font-bold::after {
+  content: '';
+  position: absolute;
+  bottom: -4px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--accent-color), transparent);
+  border-radius: 2px;
+  opacity: 0.6;
+  animation: glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes glow {
+  from {
+    box-shadow: 0 0 5px var(--accent-color);
+    opacity: 0.6;
+  }
+  to {
+    box-shadow: 0 0 20px var(--accent-color);
+    opacity: 1;
+  }
+}
+
+/* Dark mode floating effect for cards */
+.dark .mb-4.grid {
+  position: relative !important;
+  animation: float 6s ease-in-out infinite !important;
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-2px);
+  }
+}
+
+/* Custom scrollbar for dark mode */
+.dark ::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark ::-webkit-scrollbar-track {
+  background: var(--card-bg);
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
