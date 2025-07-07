@@ -37,7 +37,7 @@ const items: MenuItem[] = [
     //   { key: '8', label: 'Lịch sử' },
     // ],
   },
-  { key: 'breakfast', icon: <ScheduleOutlined />, label: 'Phân việc ăn sáng' },
+  { key: 'breakfast', icon: <ScheduleOutlined />, label: 'Phân việc' },
   { key: 'settings', icon: <SettingOutlined />, label: 'Cài đặt' },
   // {
   //   key: 'sub2',
