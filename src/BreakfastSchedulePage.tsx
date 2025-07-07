@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Table, Card, Tag, Avatar, DatePicker, Button, Modal, Form, Input, Select, message, Spin } from 'antd';
-import { PlusOutlined, UserOutlined, ReloadOutlined } from '@ant-design/icons';
+import { Table, Card, Tag, Avatar, DatePicker, Button, Modal, Form, Input, Select, message, Spin, Alert, Space } from 'antd';
+import { PlusOutlined, UserOutlined, ReloadOutlined, LoginOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useTheme } from './ThemeContext';
 import type { ColumnsType } from 'antd/es/table';
 import dayjs from 'dayjs';
@@ -10,6 +10,7 @@ dayjs.locale('vi');
 
 const API_BASE_URL = 'https://686bff3014219674dcc6e57a.mockapi.io';
 const API_ENDPOINT = '/dat1';
+const LOGIN_ENDPOINT = '/login';
 
 interface BreakfastDuty {
     id: string;
@@ -21,8 +22,34 @@ interface BreakfastDuty {
     trangThai: 'scheduled' | 'in-progress' | 'completed' | 'missed';
 }
 
+interface LoginCredentials {
+    username: string;
+    password: string;
+    id: string;
+}
+
 // API Service functions
 const apiService = {
+    // Login API
+    login: async (username: string, password: string): Promise<boolean> => {
+        try {
+            const response = await fetch(`${API_BASE_URL}${LOGIN_ENDPOINT}`);
+            if (!response.ok) throw new Error('Failed to fetch login data');
+            const loginData: LoginCredentials[] = await response.json();
+
+            // Check credentials (case insensitive for username)
+            const user = loginData.find(user =>
+                user.username.toLowerCase() === username.toLowerCase() &&
+                user.password === password
+            );
+
+            return !!user;
+        } catch (error) {
+            console.error('Error during login:', error);
+            throw error;
+        }
+    },
+
     // GET all duties
     getAllDuties: async (): Promise<BreakfastDuty[]> => {
         try {
@@ -101,10 +128,14 @@ const BreakfastSchedulePage = () => {
     const { actualTheme } = useTheme();
     const [data, setData] = useState<BreakfastDuty[]>([]);
     const [isModalVisible, setIsModalVisible] = useState(false);
+    const [isLoginModalVisible, setIsLoginModalVisible] = useState(false);
     const [editingRecord, setEditingRecord] = useState<BreakfastDuty | null>(null);
     const [loading, setLoading] = useState(false);
     const [submitLoading, setSubmitLoading] = useState(false);
+    const [loginLoading, setLoginLoading] = useState(false);
+    const [isLoggedIn, setIsLoggedIn] = useState(false);
     const [form] = Form.useForm();
+    const [loginForm] = Form.useForm();
 
     // Load data from API when component mounts
     useEffect(() => {
@@ -123,6 +154,48 @@ const BreakfastSchedulePage = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    // Login function
+    const handleLogin = async () => {
+        try {
+            const values = await loginForm.validateFields();
+            setLoginLoading(true);
+
+            const isValid = await apiService.login(values.username, values.password);
+
+            if (isValid) {
+                setIsLoggedIn(true);
+                setIsLoginModalVisible(false);
+                loginForm.resetFields();
+                message.success('Đăng nhập thành công!');
+            } else {
+                message.error('Tên đăng nhập hoặc mật khẩu không đúng!');
+            }
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Có lỗi xảy ra khi đăng nhập!';
+            message.error(`Lỗi đăng nhập: ${errorMessage}`);
+        } finally {
+            setLoginLoading(false);
+        }
+    };
+
+    // Logout function
+    const handleLogout = () => {
+        setIsLoggedIn(false);
+        message.success('Đăng xuất thành công!');
+    };
+
+    // Show login modal
+    const showLoginModal = () => {
+        setIsLoginModalVisible(true);
+        loginForm.resetFields();
+    };
+
+    // Cancel login modal
+    const handleLoginCancel = () => {
+        setIsLoginModalVisible(false);
+        loginForm.resetFields();
     };
 
     const getStatusColor = (status: string) => {
@@ -159,7 +232,7 @@ const BreakfastSchedulePage = () => {
             key: 'person',
             render: (_, record) => (
                 <div className="flex items-center gap-3">
-                    <Avatar src={record.avatar} icon={<UserOutlined />} />
+                    <Avatar src={record.avatar} icon={<UserOutlined />} style={{ marginRight: '10px' }} />
                     <span className={actualTheme === 'dark' ? 'text-white' : 'text-gray-800'}>
                         {record.ten}
                     </span>
@@ -200,27 +273,39 @@ const BreakfastSchedulePage = () => {
             key: 'action',
             render: (_, record) => (
                 <div className="flex gap-2">
-                    <Button
-                        type="link"
-                        onClick={() => handleEdit(record)}
-                        className={actualTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
-                    >
-                        Chỉnh sửa
-                    </Button>
-                    <Button
-                        type="link"
-                        danger
-                        onClick={() => handleDelete(record)}
-                        className={actualTheme === 'dark' ? 'text-red-400' : 'text-red-600'}
-                    >
-                        Xóa
-                    </Button>
+                    {isLoggedIn ? (
+                        <>
+                            <Button
+                                type="link"
+                                onClick={() => handleEdit(record)}
+                                className={actualTheme === 'dark' ? 'text-blue-400' : 'text-blue-600'}
+                            >
+                                Chỉnh sửa
+                            </Button>
+                            <Button
+                                type="link"
+                                danger
+                                onClick={() => handleDelete(record)}
+                                className={actualTheme === 'dark' ? 'text-red-400' : 'text-red-600'}
+                            >
+                                Xóa
+                            </Button>
+                        </>
+                    ) : (
+                        <span className={actualTheme === 'dark' ? 'text-gray-500' : 'text-gray-400'}>
+                            Cần đăng nhập để thao tác
+                        </span>
+                    )}
                 </div>
             ),
         },
     ];
 
     const handleEdit = (record: BreakfastDuty) => {
+        if (!isLoggedIn) {
+            message.warning('Vui lòng đăng nhập để chỉnh sửa!');
+            return;
+        }
         setEditingRecord(record);
         form.setFieldsValue({
             ...record,
@@ -231,6 +316,10 @@ const BreakfastSchedulePage = () => {
     };
 
     const handleAdd = () => {
+        if (!isLoggedIn) {
+            message.warning('Vui lòng đăng nhập để thêm mới!');
+            return;
+        }
         setEditingRecord(null);
         form.resetFields();
         setIsModalVisible(true);
@@ -278,6 +367,11 @@ const BreakfastSchedulePage = () => {
     };
 
     const handleDelete = async (record: BreakfastDuty) => {
+        if (!isLoggedIn) {
+            message.warning('Vui lòng đăng nhập để xóa!');
+            return;
+        }
+
         try {
             await apiService.deleteDuty(record.id);
             setData(data.filter(item => item.id !== record.id));
@@ -310,14 +404,33 @@ const BreakfastSchedulePage = () => {
                             📅 Phân việc đi lấy đồ ăn sáng
                         </h2>
                         <div className="flex gap-2">
-                            <Button
-                                type="primary"
-                                icon={<PlusOutlined />}
-                                onClick={handleAdd}
-                                disabled={loading}
-                            >
-                                Thêm mới
-                            </Button>
+                            {isLoggedIn ? (
+                                <>
+                                    <Button
+                                        type="primary"
+                                        icon={<PlusOutlined />}
+                                        onClick={handleAdd}
+                                        disabled={loading}
+                                    >
+                                        Thêm mới
+                                    </Button>
+                                    <Button
+                                        icon={<LogoutOutlined />}
+                                        onClick={handleLogout}
+                                        danger
+                                    >
+                                        Đăng xuất
+                                    </Button>
+                                </>
+                            ) : (
+                                <Button
+                                    type="primary"
+                                    icon={<LoginOutlined />}
+                                    onClick={showLoginModal}
+                                >
+                                    Đăng nhập
+                                </Button>
+                            )}
                             <Button
                                 icon={<ReloadOutlined />}
                                 onClick={loadDuties}
@@ -333,12 +446,47 @@ const BreakfastSchedulePage = () => {
                 }
                 className={actualTheme === 'dark' ? 'dark-card' : ''}
             >
-                <div className="mb-4">
-                    <p className={`${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-600'}`}>
-                        Lịch phân việc đi lấy đồ ăn sáng cho 21 tuần (10 tuần trước + tuần hiện tại + 10 tuần sau).
-                        Mỗi người phụ trách 1 tuần từ thứ 2 đến thứ 6.
-                    </p>
-                </div>
+                <Space direction="vertical" size="middle" className="w-full mb-4">
+                    {!isLoggedIn && (
+                        <Alert
+                            message="Cần đăng nhập để quản lý dữ liệu"
+                            description="Vui lòng đăng nhập để có thể thêm mới, chỉnh sửa và xóa các bản ghi phân việc."
+                            type="warning"
+                            showIcon
+                            icon={<LoginOutlined />}
+                            className="border-orange-200"
+                        />
+                    )}
+
+                    <div className={`p-4 rounded-lg border ${actualTheme === 'dark'
+                        ? 'bg-gray-800 border-gray-700'
+                        : 'bg-blue-50 border-blue-200'
+                        }`}>
+                        <Space direction="vertical" size="small" className="w-full">
+
+                            <div className={`${actualTheme === 'dark' ? 'text-gray-300' : 'text-gray-700'}`}>
+                                <div className="flex items-start gap-2 mb-2">
+                                    <span className="text-blue-500">📊</span>
+                                    <span>
+                                        <strong>Phạm vi:</strong> 21 tuần (10 tuần trước + tuần hiện tại + 10 tuần sau)
+                                    </span>
+                                </div>
+                                <div className="flex items-start gap-2 mb-2">
+                                    <span className="text-green-500">👤</span>
+                                    <span>
+                                        <strong>Phân công:</strong> Mỗi người phụ trách 1 tuần (Thứ 2 - Thứ 6)
+                                    </span>
+                                </div>
+                                <div className="flex items-start gap-2">
+                                    <span className="text-purple-500">🍽️</span>
+                                    <span>
+                                        <strong>Nhiệm vụ:</strong> Đi lấy đồ ăn sáng cho team
+                                    </span>
+                                </div>
+                            </div>
+                        </Space>
+                    </div>
+                </Space>
 
                 <Spin spinning={loading}>
                     <Table
@@ -356,6 +504,58 @@ const BreakfastSchedulePage = () => {
                 </Spin>
             </Card>
 
+            {/* Login Modal */}
+            <Modal
+                title={
+                    <div className="flex items-center gap-2" style={{ textAlign: 'center' }}>
+                        <span>Đăng nhập hệ thống</span>
+                    </div>
+                }
+                open={isLoginModalVisible}
+                onOk={handleLogin}
+                onCancel={handleLoginCancel}
+                confirmLoading={loginLoading}
+                okText="Đăng nhập"
+                cancelText="Hủy"
+                width={400}
+            >
+                <Form
+                    form={loginForm}
+                    layout="vertical"
+                    className="mt-4"
+                    onFinish={handleLogin}
+                >
+                    <Form.Item
+                        name="username"
+                        label="Tên đăng nhập"
+                        rules={[{ required: true, message: 'Vui lòng nhập tên đăng nhập!' }]}
+                    >
+                        <Input
+                            placeholder="Nhập tên đăng nhập"
+                            prefix={<UserOutlined />}
+                            autoComplete="username"
+                            autoFocus
+                        />
+                    </Form.Item>
+
+                    <Form.Item
+                        name="password"
+                        label="Mật khẩu"
+                        rules={[{ required: true, message: 'Vui lòng nhập mật khẩu!' }]}
+                    >
+                        <Input.Password
+                            placeholder="Nhập mật khẩu"
+                            autoComplete="current-password"
+                            onPressEnter={handleLogin}
+                        />
+                    </Form.Item>
+
+                    {/* Hidden submit button để form có thể submit bằng Enter */}
+                    <button type="submit" style={{ display: 'none' }} />
+                </Form>
+            </Modal>
+
+            {/* Edit/Add Modal */}
             <Modal
                 title={editingRecord ? 'Chỉnh sửa phân việc' : 'Thêm phân việc mới'}
                 open={isModalVisible}
