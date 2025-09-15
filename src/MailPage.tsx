@@ -163,7 +163,7 @@ const MailPage: React.FC = () => {
                                 name="username"
                                 rules={[
                                     { required: true, message: 'Vui lòng nhập email!' },
-                                    { type: 'text', message: 'Email không hợp lệ!' }
+                                    { type: 'email', message: 'Email không hợp lệ!' }
                                 ]}
                             >
                                 <Input
