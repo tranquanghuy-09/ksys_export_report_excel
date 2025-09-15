@@ -636,6 +636,7 @@ const Spreadsheet: React.FC = () => {
                         <option value="AsDN">AsDN</option>
                         <option value="DevHN">DevHN</option>
                         <option value="AsHN">AsHN</option>
+                        <option value="TranslateHCM">TranslateHCM</option>
                     </select>
                 </div>
                 <div className="w-full flex flex-row px-3 py-2" id="actions">
